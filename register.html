@@ -1,0 +1,33 @@
+<html>
+<title>EcoWork - Register</title>
+<body>
+ <h2>Register for EcoWork</h2>
+<p>Who are you registering as?</p>
+<button type="button" onclick="showForm('individual')">Individual</button> 
+<button type="button" onclick="showForm('institution')">Institution</button>
+<form id="regForm" style="display:none;">
+<br>
+<label>Name:</label>
+<input type="text" id="name" required><br><br>
+<label>Phone Number:</label>
+<input type="tel" required><br><br>
+<label>City / Area:</label>
+<input type="text" required><br><br>
+<div id="institutionField" style="display:none;">
+<label>Institution Name:</label>
+<input type="text" id="institutionName">
+</div>
+<br>
+<button type="submit">Register</button>
+</form>
+<script>
+function showForm(type) {
+document.getElementById("regForm").style.display = "block";
+let field = document.getElementById("institutionField");
+let input = document.getElementById("institutionName");
+field.style.display = type === "institution" ? "block" : "none";
+input.required = type === "institution";}
+</script>
+
+</body>
+</html>
