@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Join EcoWork</title>
+    <link rel="stylesheet" href="ecowork.css">
+</head>
+<body>
+    <main class="page-shell">
+        <section class="welcome-panel" aria-label="Welcome to EcoWork">
+            <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">🌱</span><span>EcoWork</span></a>
+            <div class="welcome-copy">
+                <span class="eyebrow"><span class="eyebrow-dot"></span> GROW SOMETHING GOOD</span>
+                <h1>There’s room<br>to <span>grow.</span></h1>
+                <p>Join neighbors and organizations creating a cleaner, greener place to call home.</p>
+                <div class="community-card">
+                    <span class="community-icon" aria-hidden="true">🌿</span>
+                    <div><strong>Every action matters</strong><span>Choose how you’d like to take part</span></div>
+                </div>
+            </div>
+            <div class="welcome-footer">A community where nature comes first.</div>
+        </section>
+        <section class="form-panel" aria-label="EcoWork registration">
+            <div class="form-wrap">
+                <div class="form-topline"><span>JOIN THE COMMUNITY</span><span class="secure-label">✦ Made for nature</span></div>
+                <h2 id="pageHeading">How will you join us?</h2>
+                <p class="form-intro" id="rolePrompt">Choose the path that feels like you. You can always explore another one later.</p>
+
+                <div class="role-options" role="group" aria-label="Choose registration type">
+                    <button type="button" class="role-card roleButton" data-role="individual" aria-pressed="false">
+                        <span class="role-icon" aria-hidden="true">🌱</span>
+                        <span class="role-copy"><strong>I'm an individual</strong><span>Join local events and get community updates.</span></span>
+                    </button>
+                    <button type="button" class="role-card roleButton" data-role="institution" aria-pressed="false">
+                        <span class="role-icon" aria-hidden="true">🏫</span>
+                        <span class="role-copy"><strong>I'm with an institution</strong><span>Bring your school or organization into the community.</span></span>
+                    </button>
+                    <button type="button" class="role-card roleButton" data-role="government" aria-pressed="false">
+                        <span class="role-icon" aria-hidden="true">🏛️</span>
+                        <span class="role-copy"><strong>Government representative</strong><span>Share environmental updates with participants.</span></span>
+                    </button>
+                </div>
+
+                <p class="prototype-notice" id="prototypeNotice">Local demo: profiles and messages are saved in this browser only. Government identities are not verified. Use the same browser to see messages update across open tabs.</p>
+                <p class="form-message" id="statusMessage" role="status" aria-live="polite"></p>
+
+                <form id="regForm" class="form-card" hidden>
+                    <h3 id="formHeading">Registration details</h3>
+                    <label for="name">Full name</label>
+                    <input type="text" id="name" name="name" autocomplete="name" pattern="[\p{L}\p{M}]+([ .'\-][\p{L}\p{M}]+)*" maxlength="100" title="Use letters, spaces, apostrophes, or hyphens." required>
+                    <label for="phone">Phone number (7–15 digits)</label>
+                    <input type="tel" id="phone" name="phone" autocomplete="tel" inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="15" title="Enter 7 to 15 digits only." required>
+                    <label for="city">City / Area</label>
+                    <input type="text" id="city" name="city" autocomplete="address-level2" minlength="2" maxlength="120" required>
+
+                    <div id="institutionField" hidden>
+                        <label for="institutionName">Institution name</label>
+                        <input type="text" id="institutionName" name="institutionName" minlength="2" maxlength="150">
+                    </div>
+
+                    <div id="notificationField">
+                        <label for="frequency">How often would you like EcoWork updates?</label>
+                        <select id="frequency" name="frequency">
+                            <option value="weekly">Weekly</option>
+                            <option value="daily">Daily</option>
+                        </select>
+                    </div>
+
+                    <div id="governmentFields" hidden>
+                        <label for="jobId">Government job / employee ID</label>
+                        <input type="text" id="jobId" name="jobId" autocomplete="off" minlength="2" maxlength="100">
+                        <label for="department">Environmental department</label>
+                        <input type="text" id="department" name="department" autocomplete="organization" minlength="2" maxlength="150" placeholder="For example, Environment and Forest Department">
+                        <label for="officialEmail">Official email address</label>
+                        <input type="email" id="officialEmail" name="officialEmail" autocomplete="email" maxlength="254" placeholder="name@example.gov">
+                        <p class="form-intro">This local demo does not verify government employment.</p>
+                    </div>
+                    <button type="submit">Create account</button>
+                </form>
+
+                <section id="governmentDashboard" class="form-card" hidden>
+                    <h3>Send a community message</h3>
+                    <p class="form-intro">Your message appears immediately for matching participants using this browser.</p>
+                    <form id="announcementForm">
+                        <label for="announcement">Message</label>
+                        <textarea id="announcement" name="announcement" rows="4" minlength="10" maxlength="1000" placeholder="Share an event, planting drive, or environmental update…" required></textarea>
+                        <label for="audience">Audience</label>
+                        <select id="audience" name="audience">
+                            <option value="all">All participants</option>
+                            <option value="daily">Daily update subscribers</option>
+                            <option value="weekly">Weekly update subscribers</option>
+                        </select>
+                        <button type="submit">Send message</button>
+                    </form>
+                </section>
+
+                <section id="announcements" class="form-card">
+                    <h3>Community messages</h3>
+                    <ul id="announcementList"><li>No messages yet.</li></ul>
+                </section>
+                <a class="text-link" href="index.html">← Back to home</a>
+            </div>
+        </section>
+    </main>
+    <script>
+        const storageKeys = {
+            registrations: "ecowork.registrations",
+            announcements: "ecowork.announcements"
+        };
+        const roleButtons = document.querySelectorAll(".roleButton");
+        const regForm = document.getElementById("regForm");
+        const statusMessage = document.getElementById("statusMessage");
+        const institutionField = document.getElementById("institutionField");
+        const institutionName = document.getElementById("institutionName");
+        const governmentFields = document.getElementById("governmentFields");
+        const jobId = document.getElementById("jobId");
+        const department = document.getElementById("department");
+        const officialEmail = document.getElementById("officialEmail");
+        const notificationField = document.getElementById("notificationField");
+        const governmentDashboard = document.getElementById("governmentDashboard");
+        const announcementList = document.getElementById("announcementList");
+        let selectedRole = "";
+        let registrations = readStoredList(storageKeys.registrations);
+        let announcements = readStoredList(storageKeys.announcements);
+        let currentGovernment = null;
+
+        function readStoredList(key) {
+            try {
+                const value = localStorage.getItem(key);
+                if (!value) return [];
+                const parsed = JSON.parse(value);
+                if (!Array.isArray(parsed)) throw new Error("Saved data is not a list.");
+                return parsed;
+            } catch (error) {
+                console.error("Could not read EcoWork browser storage:", error);
+                statusMessage.textContent = "Could not load saved EcoWork data. Clear this site's browser storage and try again.";
+                return [];
+            }
+        }
+
+        function saveStoredData(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (error) {
+                console.error("Could not save EcoWork browser storage:", error);
+                statusMessage.textContent = "Could not save data in this browser. Check browser storage settings and try again.";
+                return false;
+            }
+        }
+
+        function renderAnnouncements() {
+            announcementList.replaceChildren();
+            if (announcements.length === 0) {
+                announcementList.textContent = "No messages yet.";
+                return;
+            }
+            announcements.slice().reverse().forEach(function (announcement) {
+                const item = document.createElement("li");
+                item.textContent = new Date(announcement.createdAt).toLocaleString() +
+                    " — " + announcement.message + " (" + announcement.audience + ")";
+                announcementList.appendChild(item);
+            });
+        }
+
+        function chooseRole(role) {
+            selectedRole = role;
+            regForm.hidden = false;
+            document.getElementById("formHeading").textContent =
+                role === "government" ? "Government representative details" : "Registration details";
+            roleButtons.forEach(function (button) {
+                button.setAttribute("aria-pressed", String(button.dataset.role === role));
+            });
+
+            const isInstitution = role === "institution";
+            const isGovernment = role === "government";
+            institutionField.hidden = !isInstitution;
+            institutionName.required = isInstitution;
+            governmentFields.hidden = !isGovernment;
+            jobId.required = isGovernment;
+            department.required = isGovernment;
+            officialEmail.required = isGovernment;
+            notificationField.hidden = isGovernment;
+            governmentDashboard.hidden = true;
+            statusMessage.textContent = "";
+            regForm.scrollIntoView({ behavior: "smooth", block: "start" });
+            document.getElementById("name").focus({ preventScroll: true });
+        }
+
+        roleButtons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                chooseRole(button.dataset.role);
+            });
+        });
+
+        regForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            if (!selectedRole || !regForm.reportValidity()) return;
+
+            const registration = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+                role: selectedRole,
+                name: document.getElementById("name").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
+                city: document.getElementById("city").value.trim(),
+                createdAt: new Date().toISOString()
+            };
+            if (selectedRole === "institution") {
+                registration.institutionName = institutionName.value.trim();
+            } else if (selectedRole === "government") {
+                registration.jobId = jobId.value.trim();
+                registration.department = department.value.trim();
+                registration.officialEmail = officialEmail.value.trim();
+            } else {
+                registration.frequency = document.getElementById("frequency").value;
+            }
+
+            const nextRegistrations = registrations.concat(registration);
+            if (!saveStoredData(storageKeys.registrations, nextRegistrations)) return;
+            registrations = nextRegistrations;
+
+            if (selectedRole === "government") {
+                currentGovernment = registration;
+                governmentDashboard.hidden = false;
+                document.getElementById("pageHeading").hidden = true;
+                document.getElementById("rolePrompt").hidden = true;
+                document.querySelector(".role-options").hidden = true;
+                document.getElementById("prototypeNotice").hidden = true;
+                regForm.reset();
+                regForm.hidden = true;
+                roleButtons.forEach(function (button) {
+                    button.hidden = true;
+                });
+                statusMessage.textContent = "Government profile saved in this browser. Messages you send will show in this browser only.";
+                governmentDashboard.scrollIntoView({ behavior: "smooth", block: "start" });
+            } else {
+                try {
+                    sessionStorage.setItem("ecowork.currentRegistration", JSON.stringify(registration));
+                } catch (error) {
+                    console.error("Could not save active EcoWork profile in this tab:", error);
+                    statusMessage.textContent = "Registration was saved, but this tab could not open your profile. Enable session storage and try again.";
+                    return;
+                }
+                window.location.href = "success.html";
+            }
+        });
+
+        document.getElementById("announcementForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            if (!form.reportValidity()) return;
+            if (!currentGovernment) {
+                statusMessage.textContent = "Register as a government representative before sending a message.";
+                return;
+            }
+
+            const message = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+                sender: currentGovernment.name,
+                department: currentGovernment.department,
+                message: document.getElementById("announcement").value.trim(),
+                audience: document.getElementById("audience").value,
+                createdAt: new Date().toISOString()
+            };
+            const nextAnnouncements = announcements.concat(message);
+            if (!saveStoredData(storageKeys.announcements, nextAnnouncements)) return;
+            announcements = nextAnnouncements;
+            renderAnnouncements();
+            form.reset();
+            statusMessage.textContent = "Message sent! It is available immediately to matching participants in this browser.";
+        });
+
+        window.addEventListener("storage", function (event) {
+            if (event.key === storageKeys.announcements) {
+                announcements = readStoredList(storageKeys.announcements);
+                renderAnnouncements();
+            } else if (event.key === storageKeys.registrations) {
+                registrations = readStoredList(storageKeys.registrations);
+            }
+        });
+
+        renderAnnouncements();
+    </script>
+</body>
+</html>

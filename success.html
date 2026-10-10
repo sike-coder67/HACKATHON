@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your EcoWork Space</title>
+    <link rel="stylesheet" href="ecowork.css">
+</head>
+<body>
+    <main class="page-shell">
+        <section class="welcome-panel" aria-label="Welcome to EcoWork">
+            <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">🌱</span><span>EcoWork</span></a>
+            <div class="welcome-copy">
+                <span class="eyebrow"><span class="eyebrow-dot"></span> YOU’RE PART OF SOMETHING GOOD</span>
+                <h1>Let’s help<br>nature <span>thrive.</span></h1>
+                <p>Your community is stronger with you in it. Keep an eye out for new ways to lend a hand.</p>
+                <div class="community-card">
+                    <span class="community-icon" aria-hidden="true">🌎</span>
+                    <div><strong>One community. Many small actions.</strong><span>Thank you for showing up for nature.</span></div>
+                </div>
+            </div>
+            <div class="welcome-footer">Together, we can make a greener tomorrow.</div>
+        </section>
+        <section class="form-panel" aria-label="Your EcoWork account">
+            <div class="form-wrap">
+                <div class="form-topline"><span>YOUR ECO WORKSPACE</span><span class="secure-label">✦ Member space</span></div>
+                <h2 class="success-heading">You’re in!</h2>
+                <p id="welcomeMessage" class="success-intro" role="status" aria-live="polite"></p>
+                <p class="notice">Local demo: profiles and messages are saved in this browser only. Messages appear live in other EcoWork tabs in this browser. This demo does not send SMS, email, or push notifications.</p>
+                <div class="dashboard">
+                    <section class="panel" aria-labelledby="profileHeading">
+                        <h3 id="profileHeading">Your profile</h3>
+                        <form id="profileForm">
+                            <label for="profileName">Name</label>
+                            <input type="text" id="profileName" pattern="[\p{L}\p{M}]+([ .'\-][\p{L}\p{M}]+)*" maxlength="100" title="Use letters, spaces, apostrophes, or hyphens." required>
+                            <label for="profileCity">City / Area</label>
+                            <input type="text" id="profileCity" minlength="2" maxlength="120" required>
+                            <div id="profileInstitutionField" hidden>
+                                <label for="profileInstitution">Institution</label>
+                                <input type="text" id="profileInstitution" minlength="2" maxlength="150">
+                            </div>
+                            <label for="profilePhone">Phone (7–15 digits)</label>
+                            <input type="tel" id="profilePhone" inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="15" title="Enter 7 to 15 digits only." required>
+                            <label for="profileFrequency">Update preference</label>
+                            <select id="profileFrequency">
+                                <option value="weekly">Weekly</option>
+                                <option value="daily">Daily</option>
+                            </select>
+                            <button type="submit">Save profile</button>
+                        </form>
+                        <p id="profileStatus" class="form-message" role="status" aria-live="polite"></p>
+                    </section>
+                    <section class="panel" aria-labelledby="upcomingHeading">
+                        <h3 id="upcomingHeading">Community messages</h3>
+                        <p id="messageSchedule" class="form-intro"></p>
+                        <p id="messageStatus" class="form-message" role="status" aria-live="polite"></p>
+                        <ul id="messageList"></ul>
+                    </section>
+                </div>
+                <a class="text-link" href="index.html">← Back to home</a>
+            </div>
+        </section>
+    </main>
+    <script>
+        const storageKeys = {
+            registrations: "ecowork.registrations",
+            announcements: "ecowork.announcements"
+        };
+        const welcomeMessage = document.getElementById("welcomeMessage");
+        const messageSchedule = document.getElementById("messageSchedule");
+        const messageList = document.getElementById("messageList");
+        const profileForm = document.getElementById("profileForm");
+        const profileName = document.getElementById("profileName");
+        const profileCity = document.getElementById("profileCity");
+        const profilePhone = document.getElementById("profilePhone");
+        const profileFrequency = document.getElementById("profileFrequency");
+        const profileInstitutionField = document.getElementById("profileInstitutionField");
+        const profileInstitution = document.getElementById("profileInstitution");
+        const profileStatus = document.getElementById("profileStatus");
+        const messageStatus = document.getElementById("messageStatus");
+        let currentRegistration = readCurrentRegistration();
+
+        function readCurrentRegistration() {
+            try {
+                const value = sessionStorage.getItem("ecowork.currentRegistration");
+                return value ? JSON.parse(value) : null;
+            } catch (error) {
+                console.error("Could not read EcoWork profile:", error);
+                welcomeMessage.textContent = "Could not read your saved profile from this browser.";
+                return null;
+            }
+        }
+
+        function readList(key) {
+            try {
+                const value = localStorage.getItem(key);
+                if (!value) return [];
+                const parsed = JSON.parse(value);
+                if (!Array.isArray(parsed)) throw new Error("Saved EcoWork data is not a list.");
+                return parsed;
+            } catch (error) {
+                console.error("Could not read EcoWork browser data:", error);
+                messageStatus.textContent = "Could not read saved EcoWork data from this browser.";
+                return [];
+            }
+        }
+
+        function renderProfile() {
+            if (!currentRegistration) {
+                welcomeMessage.textContent = "No participant profile is saved in this browser yet.";
+                messageSchedule.textContent = "Register as an individual or institution to join the community.";
+                profileForm.hidden = true;
+                messageList.textContent = "No messages to show.";
+                return;
+            }
+
+            welcomeMessage.textContent = "Thanks for joining, " + currentRegistration.name + "!";
+            profileName.value = currentRegistration.name || "";
+            profileCity.value = currentRegistration.city || "";
+            profilePhone.value = currentRegistration.phone || "";
+            profileFrequency.value = currentRegistration.frequency || "weekly";
+            const isInstitution = currentRegistration.role === "institution";
+            profileInstitutionField.hidden = !isInstitution;
+            profileInstitution.required = isInstitution;
+            profileInstitution.value = currentRegistration.institutionName || "";
+            renderMessages();
+        }
+
+        function renderMessages() {
+            messageList.replaceChildren();
+            if (!currentRegistration) return;
+            const frequency = currentRegistration.frequency === "daily" ? "daily" : "weekly";
+            messageSchedule.textContent = "Your preference is " + frequency +
+                ". New matching messages appear here immediately while EcoWork is open in this browser.";
+            const messages = readList(storageKeys.announcements).filter(function (announcement) {
+                return announcement && typeof announcement.message === "string" &&
+                    (announcement.audience === "all" || announcement.audience === frequency);
+            });
+
+            if (messages.length === 0) {
+                messageList.textContent = "No messages for your preference yet.";
+                return;
+            }
+            messages.slice().reverse().forEach(function (announcement) {
+                const item = document.createElement("li");
+                item.textContent = new Date(announcement.createdAt).toLocaleString() +
+                    " — " + announcement.message + " (from " + announcement.department + ")";
+                messageList.appendChild(item);
+            });
+        }
+
+        profileForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            if (!currentRegistration || !profileForm.reportValidity()) return;
+
+            const registrations = readList(storageKeys.registrations);
+            const index = registrations.findIndex(function (registration) {
+                return registration.id === currentRegistration.id;
+            });
+            if (index < 0) {
+                profileStatus.textContent = "Could not find your registration record in this browser.";
+                return;
+            }
+
+            const updatedRegistration = Object.assign({}, currentRegistration, {
+                name: profileName.value.trim(),
+                city: profileCity.value.trim(),
+                phone: profilePhone.value.trim(),
+                frequency: profileFrequency.value
+            });
+            if (updatedRegistration.role === "institution") {
+                updatedRegistration.institutionName = profileInstitution.value.trim();
+            }
+            registrations[index] = updatedRegistration;
+
+            try {
+                localStorage.setItem(storageKeys.registrations, JSON.stringify(registrations));
+                sessionStorage.setItem("ecowork.currentRegistration", JSON.stringify(updatedRegistration));
+                currentRegistration = updatedRegistration;
+                profileStatus.textContent = "Profile saved in this browser.";
+                welcomeMessage.textContent = "Thanks for being part of EcoWork, " + currentRegistration.name + "!";
+                renderMessages();
+            } catch (error) {
+                console.error("Could not save EcoWork profile:", error);
+                profileStatus.textContent = "Could not save profile changes. Check browser storage and try again.";
+            }
+        });
+
+        window.addEventListener("storage", function (event) {
+            if (event.key === storageKeys.announcements) {
+                renderMessages();
+                messageStatus.textContent = "New messages loaded.";
+            }
+        });
+
+        renderProfile();
+    </script>
+</body>
+</html>
